@@ -1,0 +1,183 @@
+version: '3'
+services:
+  front:
+    build: 
+      context: ./front
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    networks:
+      - blog-network
+    labels:
+      - "com.docker.compose.project=blog"
+      - "com.docker.compose.service=front"
+      - "com.docker.compose.depends.on=server"
+
+  server:
+    build: 
+      context: ./server
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    environment:
+      - DB_HOST=db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=blog
+    depends_on:
+      - db
+    networks:
+      - blog-network
+    labels:
+      - "com.docker.compose.project=blog"
+      - "com.docker.compose.service=server"
+      - "com.docker.compose.depends.on=db"
+
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=blog
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - blog-network
+    labels:
+      - "com.docker.compose.project=blog"
+      - "com.docker.compose.service=db"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=db
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    depends_on:
+      - db
+    networks:
+      - blog-network
+    labels:
+      - "com.docker.compose.project=blog"
+      - "com.docker.compose.service=phpmyadmin"
+      - "com.docker.compose.depends.on=db"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - cadvisor
+    networks:
+      - blog-network
+    labels:
+      - "com.docker.compose.project=blog"
+      - "com.docker.compose.service=prometheus"
+      - "com.docker.compose.depends.on=cadvisor"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - blog-network
+    labels:
+      - "com.docker.compose.project=blog"
+      - "com.docker.compose.service=grafana"
+      - "com.docker.compose.depends.on=prometheus"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+    networks:
+      - blog-network
+    labels:
+      - "com.docker.compose.project=blog"
+      - "com.docker.compose.service=cadvisor"
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - portainer_data:/data
+    ports:
+      - "9000:9000"
+    networks:
+      - blog-network
+
+  weave-scope:
+    image: weaveworks/scope:1.13.2
+    container_name: weave-scope
+    restart: unless-stopped
+    privileged: true
+    pid: "host"
+    ports:
+      - "4040:4040"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys/kernel/debug:/sys/kernel/debug:ro
+    environment:
+      - SCOPE_HOSTNAME=weave-scope
+    command:
+      - "--probe.docker=true"
+      - "--probe.docker.bridge=docker0"
+      - "--probe.processes=true"
+      - "--probe.proc.spy=true"
+      - "--probe.spy.interval=2s"
+      - "--app.weave.addr=127.0.0.1:4040"
+    networks:
+      - blog-network
+    labels:
+      - "com.docker.compose.project=blog"
+      - "com.docker.compose.service=weave-scope"
+
+volumes:
+  mysql_data:
+  prometheus_data:
+  grafana_data:
+  portainer_data:
+
+networks:
+  blog-network:
+    driver: bridge
