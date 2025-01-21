@@ -30,6 +30,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/arm/v7
+          file: ./app/Dockerfile
+          platforms: linux/amd64
           push: true
-          tags: votre-username/python-ci:latest 
+          tags: fantik94/python-ci:latest
