@@ -2,8 +2,11 @@ import { Card, CardContent, CardMedia, Typography, Box, Chip, CardActionArea } f
 import { Link } from 'react-router-dom';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import BookmarkButton from './BookmarkIcon';
+import { useBookmarks } from '../hooks/useBookmarks';
 
-function ArticleCard({ article, onToggleBookmark, isBookmarked }) {
+function ArticleCard({ article }) {
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -92,8 +95,8 @@ function ArticleCard({ article, onToggleBookmark, isBookmarked }) {
             />
             <BookmarkButton 
               articleId={article.id}
-              isBookmarked={isBookmarked}
-              onToggle={onToggleBookmark}
+              isBookmarked={isBookmarked(article.id)}
+              onToggle={toggleBookmark}
             />
           </Box>
         </CardContent>

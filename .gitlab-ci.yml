@@ -83,3 +83,41 @@ deploy_prod:
     - docker-compose -f docker-compose.prod.yml logs db
     - docker-compose -f docker-compose.prod.yml logs server
     - docker exec projet-blog-db-1 mysql -uuser -ppassword blog -e "SHOW TABLES;"
+
+validate_merge:
+  stage: deploy  # Après tous les autres stages
+  rules:
+    - if: $CI_COMMIT_BRANCH != "main"  # Ne s'exécute pas sur main
+      when: always
+  environment:
+    name: production
+  when: manual  # Rend l'étape manuelle
+  script:
+    - echo "Pipeline validé ! Vous pouvez maintenant merger dans main"
+  allow_failure: false  # Le pipeline ne sera pas considéré comme réussi tant que cette étape n'est pas validée
+
+merge_to_main:
+  stage: deploy
+  image: alpine:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH != "main"
+      when: always
+  when: manual
+  before_script:
+    - apk add --no-cache curl git
+  script:
+    - |
+      if [ $CI_JOB_TOKEN ]; then
+        curl --request POST \
+          --form "id=$CI_PROJECT_ID" \
+          --form "source_branch=$CI_COMMIT_REF_NAME" \
+          --form "target_branch=main" \
+          --form "title=Merge $CI_COMMIT_REF_NAME into main" \
+          --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+          "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests"
+      fi
+  variables:
+    GIT_STRATEGY: none
+  environment:
+    name: production
+

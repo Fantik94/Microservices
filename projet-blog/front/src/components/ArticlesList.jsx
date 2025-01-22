@@ -22,8 +22,6 @@ import WelcomeAnimation from './WelcomeAnimation';
 import AddIcon from '@mui/icons-material/Add';
 import { useNotification } from '../context/NotificationContext'; 
 import ArticleCard from './ArticleCard';
-import { useBookmarks } from '../hooks/useBookmarks';
-import mockArticles from '../mocks/articlesMock';
 
 function ArticlesList() {
   const [articles, setArticles] = useState([]);
@@ -42,38 +40,21 @@ function ArticlesList() {
 
   const articlesPerPage = 9;
 
-  const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
-
-  const { showNotification } = useNotification();
-
-  const fetchArticles = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/api/articles', {
-        signal: AbortSignal.timeout(5000) // Timeout de 5 secondes
-      });
-      
-      if (!response.ok) throw new Error('Erreur serveur');
-      const data = await response.json();
-      return { success: true, data };
-    } catch (err) {
-      console.warn('Erreur API, utilisation des données mockées:', err);
-      return { success: false, data: mockArticles };
-    }
-  };
-
   useEffect(() => {
-    const loadArticles = async () => {
-      setLoading(true);
-      const { success, data } = await fetchArticles();
-      setArticles(data);
-      if (!success) {
-        showNotification('Mode hors-ligne : données de démonstration', 'warning');
-      }
-      setLoading(false);
-    };
-
-    loadArticles();
-  }, [showNotification]);
+    fetch('/api/articles')
+      .then(res => {
+        if (!res.ok) throw new Error('Erreur serveur');
+        return res.json();
+      })
+      .then(data => {
+        setArticles(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -176,11 +157,7 @@ function ArticlesList() {
                     lg={4} 
                     key={article.id}
                   >
-                    <ArticleCard 
-                      article={article}
-                      isBookmarked={isBookmarked(article.id)}
-                      onToggleBookmark={toggleBookmark}
-                    />
+                    <ArticleCard article={article} />
                   </Grid>
                 ))}
               </Grid>

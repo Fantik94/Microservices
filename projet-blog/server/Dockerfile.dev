@@ -1,14 +1,16 @@
-FROM node:20-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+# Installation des dépendances incluant swagger-ui-express et swagger-jsdoc
+RUN npm install && \
+    npm install swagger-ui-express swagger-jsdoc && \
+    npm install -g nodemon
 
 COPY . .
 
-# Installation de nodemon globalement
-RUN npm install -g nodemon
+EXPOSE 3000
 
 CMD ["npm", "run", "dev"] 

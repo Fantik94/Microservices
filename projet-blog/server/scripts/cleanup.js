@@ -1,14 +1,14 @@
 async function cleanupArticles() {
     try {
         // Récupérer tous les articles
-        const response = await fetch('http://localhost:3000/api/articles');
+        const response = await fetch('/api/articles');
         const articles = await response.json();
         
         console.log(`Trouvé ${articles.length} articles à supprimer...`);
 
         // Supprimer chaque article
         for (const article of articles) {
-            const deleteResponse = await fetch(`http://localhost:3000/api/articles/${article.id}`, {
+            const deleteResponse = await fetch(`/api/articles/${article.id}`, {
                 method: 'DELETE'
             });
 

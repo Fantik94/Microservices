@@ -35,7 +35,7 @@ function ArticleDetail() {
       setIsDeleting(true);
       setOpenDialog(false);
       
-      const response = await fetch(`http://localhost:3000/api/articles/${id}`, {
+      const response = await fetch(`/api/articles/${id}`, {
         method: 'DELETE',
       });
 

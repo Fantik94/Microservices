@@ -6,12 +6,12 @@ import ArticleCard from './ArticleCard';
 function BookmarkedArticles() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
+  const { bookmarks } = useBookmarks();
 
   useEffect(() => {
     const fetchBookmarkedArticles = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/articles');
+        const response = await fetch('/api/articles');
         const allArticles = await response.json();
         const bookmarkedArticles = allArticles.filter(article => 
           bookmarks.includes(article.id)
@@ -43,11 +43,7 @@ function BookmarkedArticles() {
         <Grid container spacing={4}>
           {articles.map(article => (
             <Grid item xs={12} md={6} lg={4} key={article.id}>
-              <ArticleCard 
-                article={article}
-                isBookmarked={isBookmarked(article.id)}
-                onToggleBookmark={toggleBookmark}
-              />
+              <ArticleCard article={article} />
             </Grid>
           ))}
         </Grid>

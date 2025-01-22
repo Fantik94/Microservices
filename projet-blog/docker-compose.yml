@@ -4,8 +4,8 @@ services:
     build: 
       context: ./front
       dockerfile: Dockerfile.dev
-    ports:
-      - "5173:5173"
+    expose:
+      - "5173"
     volumes:
       - ./front:/app
       - /app/node_modules
@@ -17,6 +17,11 @@ services:
       - "com.docker.compose.project=blog"
       - "com.docker.compose.service=front"
       - "com.docker.compose.depends.on=server"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   server:
     build: 
@@ -171,6 +176,21 @@ services:
     labels:
       - "com.docker.compose.project=blog"
       - "com.docker.compose.service=weave-scope"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - front
+      - server
+    networks:
+      - blog-network
 
 volumes:
   mysql_data:

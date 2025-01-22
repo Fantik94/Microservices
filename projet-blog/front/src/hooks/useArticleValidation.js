@@ -17,7 +17,7 @@ export function useArticleValidation(id, isDeleting = false) {
       }
 
       try {
-        const response = await fetch(`http://localhost:3000/api/articles/${id}`);
+        const response = await fetch(`/api/articles/${id}`);
         
         if (!response.ok) {
           throw new Error('Article non trouvé');

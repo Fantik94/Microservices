@@ -40,7 +40,7 @@ function ArticleForm() {
   useEffect(() => {
     if (id) {
       setLoading(true);
-      fetch(`http://localhost:3000/api/articles/${id}`)
+      fetch(`/api/articles/${id}`)
         .then(res => {
           if (!res.ok) throw new Error('Article non trouvé');
           return res.json();
@@ -69,33 +69,29 @@ function ArticleForm() {
 
     try {
       const url = id 
-        ? `http://localhost:3000/api/articles/${id}`
-        : 'http://localhost:3000/api/articles';
+        ? `/api/articles/${id}`
+        : '/api/articles';
       
-      const response = await fetch(url, {
-        method: id ? 'PUT' : 'POST',
+      const method = id ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(article),
-        signal: AbortSignal.timeout(5000)
       });
 
-      if (!response.ok) {
-        throw new Error('Erreur serveur');
-      }
+      const data = await res.json();
 
-      const data = await response.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Une erreur est survenue');
+      }
+      
       showNotification('Article sauvegardé avec succès', 'success');
-      navigate('/');
+      navigate('/'); // Redirection immédiate
 
     } catch (err) {
-      if (err.name === 'AbortError' || err.name === 'TypeError') {
-        showNotification('Mode hors-ligne : les modifications ne seront pas sauvegardées', 'warning');
-        navigate('/');
-      } else {
-        showNotification(err.message, 'error');
-      }
+      showNotification(err.message, 'error');
     } finally {
       setLoading(false);
     }

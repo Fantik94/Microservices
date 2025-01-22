@@ -61,7 +61,7 @@ describe('ArticleForm CRUD Operations', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/api/articles',
+        '/api/articles',
         expect.objectContaining({ method: 'POST' })
       );
     });
@@ -108,7 +108,7 @@ describe('ArticleForm CRUD Operations', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/api/articles/1',
+        '/api/articles/1',
         expect.objectContaining({ method: 'PUT' })
       );
     });
